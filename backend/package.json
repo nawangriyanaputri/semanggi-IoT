@@ -1,0 +1,9 @@
+{
+  "name": "sppg-monitor-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "test": "node --test"
+  }
+}

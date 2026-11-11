@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Sistem Monitoring | SPPG</title>
+  <link rel="stylesheet" href="/src/styles.css?v=7">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-3.5 7-10V5l-7-3-7 3v6c0 6.5 7 10 7 10Z"/><path d="M8.5 12.5c2-3.2 5-3.2 7 0-2 2.8-5 2.8-7 0Z"/><path d="M12 10.5v4"/></svg>
+        </div>
+        <div><div class="brand-title">SPPG Monitor</div><div class="brand-subtitle">Sistem Monitoring Pangan</div></div>
+      </div>
+      <div class="nav-label">MENU UTAMA</div>
+      <nav class="nav-list" aria-label="Menu">
+        <button class="nav-item active" type="button" data-view="dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/></svg>Dashboard</button>
+        <button class="nav-item" type="button" data-view="monitoring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Monitoring</button>
+        <button class="nav-item" type="button" data-view="analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2m0 14v2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42M3 12h2m14 0h2M5.64 18.36l1.42-1.42m9.88-9.88 1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>AI Analysis</button>
+        <button class="nav-item" type="button" data-view="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5m4-1v5l3 2"/></svg>Riwayat Data</button>
+        <button class="nav-item" type="button" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.1.9-1.5 2.6-1.4-.5a7.8 7.8 0 0 1-1.5.9l-.2 1.5h-3l-.2-1.5a7.8 7.8 0 0 1-1.5-.9l-1.4.5-1.5-2.6 1.1-.9a7 7 0 0 1 0-1.8l-1.1-.9 1.5-2.6 1.4.5a7.8 7.8 0 0 1 1.5-.9l.2-1.5h3l.2 1.5a7.8 7.8 0 0 1 1.5.9l1.4-.5 1.5 2.6-1.1.9a7 7 0 0 1 0 1.8Z" transform="translate(-1 -1) scale(1.08)"/></svg>Pengaturan</button>
+      </nav>
+      <div class="side-bottom">
+        <div class="device-card">
+          <div class="device-heading"><span>Perangkat Sensor</span><span style="color:#9aa4b4;font-weight:500">01</span></div>
+          <div class="device-state"><span class="dot"></span><span id="device-status">ESP32 · DHT11 (simulasi)</span></div>
+          <div class="device-state"><span class="dot" id="api-status-dot" style="background:var(--orange)"></span><span id="api-status">Menghubungkan API…</span></div>
+        </div>
+        <div class="side-foot">Satuan Pelayanan Pemenuhan Gizi<br>Monitoring penyimpanan bahan pangan</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">SPPG <span aria-hidden="true">/</span> <strong id="breadcrumb">Dashboard</strong></div>
+        <div class="top-actions"><span class="today" id="today"></span><div class="avatar" aria-label="Petugas">PG</div></div>
+      </header>
+      <div class="content">
+        <p class="card" id="api-error" role="alert" hidden style="padding:12px 15px;color:var(--red);font-size:11px"></p>
+        <section class="view" id="view-dashboard">
+          <div class="page-heading">
+            <div><h1>Dashboard</h1><p>Pantau kondisi lingkungan penyimpanan bahan pangan Anda.</p></div>
+            <div class="date-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="date-label"></span></div>
+          </div>
+          <div class="grid metrics">
+            <article class="card metric">
+              <div class="metric-top"><span class="metric-label">Suhu Ruangan</span><span class="metric-icon temp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 14.76V5a3 3 0 0 0-6 0v9.76a5 5 0 1 0 6 0Z"/><path d="M11 11v7"/></svg></span></div>
+              <div class="metric-value"><span data-temperature>5.2</span> <small>°C</small></div>
+              <div class="metric-note">Batas parameter: <span id="temp-range">2–8 °C</span> · <span class="good">Normal</span></div>
+            </article>
+            <article class="card metric">
+              <div class="metric-top"><span class="metric-label">Kelembapan</span><span class="metric-icon humidity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5S5 11 5 15.5a7 7 0 0 0 14 0c0-4.5-7-12-7-12Z"/><path d="M9 16a3 3 0 0 0 3 3"/></svg></span></div>
+              <div class="metric-value"><span data-humidity>68</span> <small>%RH</small></div>
+              <div class="metric-note">Batas parameter: <span id="humidity-range">40–70 %RH</span> · <span class="good">Normal</span></div>
+            </article>
+            <article class="card metric">
+              <div class="metric-top"><span class="metric-label">Kondisi Lingkungan</span><span class="metric-icon status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span></div>
+              <div class="status-value"><span class="dot"></span><span id="condition">Aman</span></div>
+              <div class="metric-note">Pembaruan terakhir: <span id="last-update"></span></div>
+            </article>
+          </div>
+          <div class="grid two-col">
+            <article class="card">
+              <div class="card-head"><div><h2 class="card-title">Grafik Monitoring</h2><p class="card-subtitle">Tren suhu dan kelembapan hari ini</p></div><div class="select-wrap"><select id="chart-range" aria-label="Rentang waktu grafik"><option value="day">Hari ini</option><option value="week">7 hari</option></select></div></div>
+              <div class="chart-wrap">
+                <div class="chart-legend"><span class="legend-item"><i class="legend-line"></i>Suhu (°C)</span><span class="legend-item"><i class="legend-line hum"></i>Kelembapan (%RH)</span></div>
+                <svg class="chart-svg" data-chart="dashboard" viewBox="0 0 620 205" role="img" aria-label="Grafik tren suhu dan kelembapan">
+                  <defs><linearGradient id="tempFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5278e8" stop-opacity=".14"/><stop offset="1" stop-color="#5278e8" stop-opacity="0"/></linearGradient></defs>
+                  <g class="chart-gridline"><path d="M44 20H590"/><path d="M44 58H590"/><path d="M44 96H590"/><path d="M44 134H590"/><path d="M44 172H590"/></g>
+                  <g><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
+                  <path class="chart-area" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68 L590 172 L44 172Z"/>
+                  <path class="chart-temp" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68"/>
+                  <path class="chart-hum" d="M44 111 C75 99 87 118 112 105 S154 85 180 99 S222 110 248 91 S292 81 316 94 S355 112 383 96 S422 78 450 92 S494 109 519 94 S560 80 590 89"/>
+                  <g><text x="40" y="195">06.00</text><text x="145" y="195">09.00</text><text x="253" y="195">12.00</text><text x="360" y="195">15.00</text><text x="467" y="195">18.00</text><text x="564" y="195">21.00</text></g>
+                </svg>
+              </div>
+            </article>
+            <article class="card ai-card">
+              <div class="card-head"><div><h2 class="card-title">Prediksi AI</h2><p class="card-subtitle">Perkiraan kondisi 1 jam ke depan</p></div><span class="ai-tag">SIMULASI</span></div>
+              <div class="prediction">
+                <div class="prediction-label">Perkiraan suhu</div>
+                <div class="prediction-values"><span class="prediction-value"><span id="prediction-temperature">5.4</span> <small>°C</small></span><span class="trend" id="prediction-temperature-trend">↗ +0.2 °C</span></div>
+                <div class="prediction-label" style="margin-top:13px">Perkiraan kelembapan</div>
+                <div class="prediction-values"><span class="prediction-value"><span id="prediction-humidity">67</span> <small>%RH</small></span><span class="trend" id="prediction-humidity-trend">↘ −1 %RH</span></div>
+              </div>
+              <p class="ai-explain" id="ai-explanation">Estimasi demonstrasi berdasarkan pola data contoh. Integrasikan model AI untuk prediksi dari data sensor aktual.</p>
+            </article>
+          </div>
+          <div class="grid notice-grid">
+            <article class="card notice-card"><span class="notice-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg></span><div><h2 class="notice-title">Peringatan &amp; Status</h2><p class="notice-text" id="warning-message">Memuat status parameter…</p></div></article>
+            <article class="card notice-card"><span class="notice-icon tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6m-5 4h4m-2-20a7 7 0 0 0-4 12.75c.6.4 1 1.1 1 1.75h6c0-.65.4-1.35 1-1.75A7 7 0 0 0 12 2Z"/></svg></span><div><h2 class="notice-title">Rekomendasi</h2><p class="notice-text" id="recommendation">Memuat rekomendasi…</p></div></article>
+          </div>
+          <p class="footer-note" id="dashboard-data-note">Memeriksa mode data…</p>
+        </section>
+
+        <section class="view" id="view-monitoring" hidden>
+          <div class="page-heading"><div><h1>Monitoring</h1><p>Pemantauan tren suhu dan kelembapan ruang penyimpanan.</p></div><div class="date-pill">Data sensor ESP32</div></div>
+          <article class="card">
+            <div class="card-head">
+              <div><h2 class="card-title">Tren Pengukuran</h2><p class="card-subtitle" id="monitoring-chart-subtitle">Memuat data pengukuran…</p></div>
+              <div class="monitor-controls">
+                <div class="select-wrap">
+                  <select aria-label="Periode tren pengukuran" id="chart-range-monitor">
+                    <option value="today">Hari ini</option>
+                    <option value="yesterday">Kemarin</option>
+                    <option value="last-week">Satu minggu yang lalu</option>
+                    <option value="custom">Rentang tanggal</option>
+                  </select>
+                </div>
+                <form class="date-range-controls" id="monitoring-date-form" hidden>
+                  <label class="sr-only" for="monitoring-date-from">Tanggal mulai</label>
+                  <input aria-label="Tanggal mulai" id="monitoring-date-from" name="from" type="date" required>
+                  <span aria-hidden="true">–</span>
+                  <label class="sr-only" for="monitoring-date-to">Tanggal akhir</label>
+                  <input aria-label="Tanggal akhir" id="monitoring-date-to" name="to" type="date" required>
+                  <button class="primary-btn" type="submit">Terapkan</button>
+                </form>
+              </div>
+            </div>
+            <p class="range-message" id="monitoring-range-message" role="status" aria-live="polite" hidden></p>
+            <div class="chart-wrap">
+              <div class="chart-legend"><span class="legend-item"><i class="legend-line"></i>Suhu (°C)</span><span class="legend-item"><i class="legend-line hum"></i>Kelembapan (%RH)</span></div>
+              <svg class="chart-svg" data-chart="monitoring" viewBox="0 0 620 205" role="img" aria-label="Grafik tren suhu dan kelembapan">
+                <g class="chart-gridline"><path d="M44 20H590"/><path d="M44 58H590"/><path d="M44 96H590"/><path d="M44 134H590"/><path d="M44 172H590"/></g>
+                <g><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
+                <path class="chart-temp" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68"/>
+                <path class="chart-hum" d="M44 111 C75 99 87 118 112 105 S154 85 180 99 S222 110 248 91 S292 81 316 94 S355 112 383 96 S422 78 450 92 S494 109 519 94 S560 80 590 89"/>
+                <g class="chart-xlabels"></g>
+              </svg>
+            </div>
+          </article>
+          <p class="footer-note">Backend API terhubung, tetapi data grafik masih berupa ilustrasi. Perangkat ESP32 belum terhubung.</p>
+        </section>
+
+        <section class="view" id="view-analysis" hidden>
+          <div class="page-heading"><div><h1>AI Analysis</h1><p>Ringkasan perkiraan dan saran berdasarkan pola pengukuran.</p></div><span class="ai-tag">MODE SIMULASI</span></div>
+          <div class="grid analysis-grid">
+            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3>Suhu diperkirakan stabil</h3><p>Nilai simulasi menunjukkan suhu sekitar <strong>5.4 °C</strong>, masih di dalam rentang parameter contoh. Perubahan kecil dapat terjadi seiring sirkulasi dan aktivitas ruang.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3>Kelembapan relatif stabil</h3><p>Kelembapan diperkirakan sekitar <strong>67 %RH</strong>. Lanjutkan pemantauan agar perubahan kondisi dapat segera diketahui.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">REKOMENDASI</span><h3>Jaga kondisi penyimpanan</h3><p>Pertahankan sirkulasi udara, hindari membuka pintu ruang terlalu lama, dan susun bahan pangan agar aliran udara tetap baik.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">CATATAN</span><h3>Model AI belum terhubung</h3><p>Konten ini hanya demonstrasi UI; bukan hasil model inferensi atau analisis data sensor aktual. Hubungkan model dan data historis tervalidasi sebelum digunakan.</p></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-history" hidden>
+          <div class="page-heading"><div><h1>Riwayat Data</h1><p>Catatan pengukuran sensor terbaru.</p></div><div class="date-pill">Maksimal 500 pembacaan</div></div>
+          <article class="card page-panel">
+            <h2 class="section-heading">Pengukuran Terbaru</h2><p class="section-description">Riwayat ini disediakan sebagai contoh tampilan. Data belum diambil dari database.</p>
+            <div class="table-scroll"><table><thead><tr><th>WAKTU</th><th>SUHU</th><th>KELEMBAPAN</th><th>KONDISI</th><th>SUMBER</th></tr></thead><tbody id="history-rows"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="view" id="view-settings" hidden>
+          <div class="page-heading"><div><h1>Pengaturan</h1><p>Atur rentang parameter untuk indikator kondisi pada dashboard.</p></div></div>
+          <article class="card page-panel">
+            <h2 class="section-heading">Batas Parameter</h2><p class="section-description">Nilai ini hanya disimpan di browser perangkat ini dan bukan rekomendasi keamanan pangan. Sesuaikan dengan jenis bahan pangan serta SOP setempat.</p>
+            <form id="settings-form">
+              <div class="form-grid">
+                <label class="field">Suhu minimum (°C)<input name="tempMin" type="number" step="0.1" required></label>
+                <label class="field">Suhu maksimum (°C)<input name="tempMax" type="number" step="0.1" required></label>
+                <label class="field">Kelembapan minimum (%RH)<input name="humidityMin" type="number" min="0" max="100" step="1" required></label>
+                <label class="field">Kelembapan maksimum (%RH)<input name="humidityMax" type="number" min="0" max="100" step="1" required></label>
+              </div>
+              <div class="form-actions"><button class="primary-btn" type="submit">Simpan pengaturan</button><span class="save-message" id="save-message" role="status" aria-live="polite"></span></div>
+            </form>
+          </article>
+          <p class="footer-note">Pengaturan tersimpan oleh backend di <code>backend/data/settings.json</code>.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
