@@ -4,9 +4,7 @@
 #include <math.h>
 #include "secrets.h"
 
-const char *WIFI_SSID = "GANTI_DENGAN_NAMA_WIFI";
-const char *WIFI_PASSWORD = "GANTI_DENGAN_PASSWORD_WIFI";
-const char *API_URL = "http://192.168.1.10:3000/api/monitoring/readings";
+const char *API_URL = "http://192.168.1.7:3000/api/monitoring/readings";
 const char *DEVICE_ID = "ruang-penyimpanan-1";
 
 constexpr uint8_t DHT_PIN = 4;

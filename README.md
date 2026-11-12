@@ -33,7 +33,15 @@ Proyek firmware PlatformIO tersedia di [firmware/esp32_dht11](./firmware/esp32_d
 
 1. Pasang extension **PlatformIO IDE** di VS Code, lalu buka folder `firmware/esp32_dht11` sebagai proyek PlatformIO. Konfigurasi board saat ini adalah `esp32dev`; ubah `board` pada `platformio.ini` jika board yang dipakai berbeda.
 2. Hubungkan DHT11: VCC ke 3.3V, GND ke GND, dan DATA ke GPIO 4 (atau sesuaikan `DHT_PIN` di `src/main.cpp`). Untuk sensor DHT11 bare, gunakan resistor pull-up 10 kΩ antara DATA dan VCC bila modul tidak memilikinya.
-3. Isi `WIFI_SSID`, `WIFI_PASSWORD`, dan `API_URL` di `src/main.cpp`. API key sudah disiapkan di `src/secrets.h` dan harus sama dengan key di `backend/.env`. `API_URL` harus memakai alamat IPv4 komputer server, misalnya `http://192.168.1.10:3000/api/monitoring/readings` — jangan gunakan `localhost` karena `localhost` pada ESP32 menunjuk ke ESP32 itu sendiri.
+3. Buat atau isi `src/secrets.h` lokal (file ini diabaikan Git) dengan konfigurasi Wi-Fi dan API key:
+   ```cpp
+   #pragma once
+
+   constexpr char WIFI_SSID[] = "nama-wifi";
+   constexpr char WIFI_PASSWORD[] = "password-wifi";
+   constexpr char DEVICE_API_KEY[] = "samakan-dengan-DEVICE_API_KEY-di-backend";
+   ```
+   API key firmware harus sama dengan `DEVICE_API_KEY` di `backend/.env`. Isi `API_URL` di `src/main.cpp` dengan alamat IPv4 komputer server, misalnya `http://192.168.1.10:3000/api/monitoring/readings` — jangan gunakan `localhost` karena `localhost` pada ESP32 menunjuk ke ESP32 itu sendiri.
 4. Pilih port COM perangkat di PlatformIO, lalu jalankan **Build**, **Upload**, dan **Monitor** dari toolbar PlatformIO. Serial Monitor menggunakan 115200 baud. Respons HTTP `200` berarti backend menerima pembacaan; `401` menunjukkan kunci tidak cocok; `400` menunjukkan format atau nilai sensor ditolak.
 
 Jaga Wi-Fi dan API key tetap privat. Contoh memakai HTTP tanpa enkripsi, sehingga hanya layak untuk jaringan lokal tepercaya; untuk penggunaan di luar jaringan lokal, gunakan HTTPS melalui gateway/reverse proxy dan jangan membuka port backend langsung ke internet.
