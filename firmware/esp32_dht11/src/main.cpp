@@ -4,26 +4,46 @@
 #include <math.h>
 #include "secrets.h"
 
-const char *API_URL = "http://192.168.1.7:3000/api/monitoring/readings";
+const char *API_URL = "http://192.168.1.56:3000/api/monitoring/readings";
 const char *DEVICE_ID = "ruang-penyimpanan-1";
 
 constexpr uint8_t DHT_PIN = 4;
 constexpr uint32_t SEND_INTERVAL_MS = 30000;
+constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
+constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 25000;
 #define DHT_TYPE DHT11
 
 DHT dht(DHT_PIN, DHT_TYPE);
 uint32_t lastSendAt = 0;
+uint32_t lastWiFiAttemptAt = 0;
+bool hasAttemptedWiFi = false;
 
-void connectToWiFi() {
-  if (WiFi.status() == WL_CONNECTED) return;
+bool connectToWiFi() {
+  if (WiFi.status() == WL_CONNECTED) return true;
 
-  Serial.printf("Menghubungkan ke Wi-Fi %s", WIFI_SSID);
+  const uint32_t now = millis();
+  if (hasAttemptedWiFi && now - lastWiFiAttemptAt < WIFI_RETRY_INTERVAL_MS) {
+    return false;
+  }
+
+  hasAttemptedWiFi = true;
+  lastWiFiAttemptAt = now;
+  Serial.print("Menghubungkan ke Wi-Fi");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
+  const uint32_t attemptStartedAt = millis();
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - attemptStartedAt < WIFI_CONNECT_TIMEOUT_MS) {
     delay(500);
     Serial.print(".");
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nWi-Fi belum tersambung; akan mencoba lagi.");
+    return false;
+  }
+
   Serial.printf("\nWi-Fi terhubung. IP ESP32: %s\n", WiFi.localIP().toString().c_str());
+  return true;
 }
 
 void sendReading(float temperature, float humidity) {
@@ -57,7 +77,10 @@ void setup() {
 }
 
 void loop() {
-  connectToWiFi();
+  if (!connectToWiFi()) {
+    delay(250);
+    return;
+  }
   const uint32_t now = millis();
   if (now - lastSendAt < SEND_INTERVAL_MS) {
     delay(100);
