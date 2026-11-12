@@ -20,7 +20,7 @@
       <nav class="nav-list" aria-label="Menu">
         <button class="nav-item active" type="button" data-view="dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/></svg>Dashboard</button>
         <button class="nav-item" type="button" data-view="monitoring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Monitoring</button>
-        <button class="nav-item" type="button" data-view="analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2m0 14v2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42M3 12h2m14 0h2M5.64 18.36l1.42-1.42m9.88-9.88 1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>AI Analysis</button>
+        <button class="nav-item" type="button" data-view="analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2m0 14v2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42M3 12h2m14 0h2M5.64 18.36l1.42-1.42m9.88-9.88 1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>Analisis Data</button>
         <button class="nav-item" type="button" data-view="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5m4-1v5l3 2"/></svg>Riwayat Data</button>
         <button class="nav-item" type="button" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.1.9-1.5 2.6-1.4-.5a7.8 7.8 0 0 1-1.5.9l-.2 1.5h-3l-.2-1.5a7.8 7.8 0 0 1-1.5-.9l-1.4.5-1.5-2.6 1.1-.9a7 7 0 0 1 0-1.8l-1.1-.9 1.5-2.6 1.4.5a7.8 7.8 0 0 1 1.5-.9l.2-1.5h3l.2 1.5a7.8 7.8 0 0 1 1.5.9l1.4-.5 1.5 2.6-1.1.9a7 7 0 0 1 0 1.8Z" transform="translate(-1 -1) scale(1.08)"/></svg>Pengaturan</button>
       </nav>
@@ -80,14 +80,15 @@
               </div>
             </article>
             <article class="card ai-card">
-              <div class="card-head"><div><h2 class="card-title">Prediksi AI</h2><p class="card-subtitle">Perkiraan kondisi 1 jam ke depan</p></div><span class="ai-tag">SIMULASI</span></div>
+              <div class="card-head"><div><h2 class="card-title">Prediksi</h2><p class="card-subtitle">Perkiraan kondisi 1 jam ke depan</p></div><span class="ai-tag" id="prediction-mode-tag">MEMUAT</span></div>
               <div class="prediction">
                 <div class="prediction-label">Perkiraan suhu</div>
-                <div class="prediction-values"><span class="prediction-value"><span id="prediction-temperature">5.4</span> <small>°C</small></span><span class="trend" id="prediction-temperature-trend">↗ +0.2 °C</span></div>
+                <div class="prediction-values"><span class="prediction-value"><span id="prediction-temperature">—</span> <small>°C</small></span><span class="trend" id="prediction-temperature-trend">Belum tersedia</span></div>
                 <div class="prediction-label" style="margin-top:13px">Perkiraan kelembapan</div>
-                <div class="prediction-values"><span class="prediction-value"><span id="prediction-humidity">67</span> <small>%RH</small></span><span class="trend" id="prediction-humidity-trend">↘ −1 %RH</span></div>
+                <div class="prediction-values"><span class="prediction-value"><span id="prediction-humidity">—</span> <small>%RH</small></span><span class="trend" id="prediction-humidity-trend">Belum tersedia</span></div>
               </div>
-              <p class="ai-explain" id="ai-explanation">Estimasi demonstrasi berdasarkan pola data contoh. Integrasikan model AI untuk prediksi dari data sensor aktual.</p>
+              <p class="ai-explain" id="ai-explanation">Memuat perkiraan dari riwayat pembacaan sensor…</p>
+              <p class="ai-explain" id="prediction-refresh-status">Pembaruan otomatis setiap 30 detik.</p>
             </article>
           </div>
           <div class="grid notice-grid">
@@ -137,12 +138,12 @@
         </section>
 
         <section class="view" id="view-analysis" hidden>
-          <div class="page-heading"><div><h1>AI Analysis</h1><p>Ringkasan perkiraan dan saran berdasarkan pola pengukuran.</p></div><span class="ai-tag">MODE SIMULASI</span></div>
+          <div class="page-heading"><div><h1>Analisis Data</h1><p>Perkiraan satu jam ke depan berdasarkan tren pembacaan sensor.</p></div><span class="ai-tag" id="analysis-mode-tag">MEMUAT</span></div>
           <div class="grid analysis-grid">
-            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3>Suhu diperkirakan stabil</h3><p>Nilai simulasi menunjukkan suhu sekitar <strong>5.4 °C</strong>, masih di dalam rentang parameter contoh. Perubahan kecil dapat terjadi seiring sirkulasi dan aktivitas ruang.</p></article>
-            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3>Kelembapan relatif stabil</h3><p>Kelembapan diperkirakan sekitar <strong>67 %RH</strong>. Lanjutkan pemantauan agar perubahan kondisi dapat segera diketahui.</p></article>
-            <article class="card analysis-card"><span class="analysis-kicker">REKOMENDASI</span><h3>Jaga kondisi penyimpanan</h3><p>Pertahankan sirkulasi udara, hindari membuka pintu ruang terlalu lama, dan susun bahan pangan agar aliran udara tetap baik.</p></article>
-            <article class="card analysis-card"><span class="analysis-kicker">CATATAN</span><h3>Model AI belum terhubung</h3><p>Konten ini hanya demonstrasi UI; bukan hasil model inferensi atau analisis data sensor aktual. Hubungkan model dan data historis tervalidasi sebelum digunakan.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3 id="analysis-temperature-title">Menunggu data sensor</h3><p id="analysis-temperature-description">Belum ada perkiraan suhu.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">PREDIKSI · 1 JAM KE DEPAN</span><h3 id="analysis-humidity-title">Menunggu data sensor</h3><p id="analysis-humidity-description">Belum ada perkiraan kelembapan.</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">REKOMENDASI</span><h3>Berdasarkan batas pengaturan</h3><p id="analysis-recommendation">Memuat rekomendasi…</p></article>
+            <article class="card analysis-card"><span class="analysis-kicker">METODE</span><h3>Regresi linear</h3><p id="analysis-method">Memuat metode perhitungan…</p></article>
           </div>
         </section>
 

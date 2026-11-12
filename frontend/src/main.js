@@ -8,7 +8,7 @@ import { initializeSettings } from "./features/settings.js";
 const labels = {
   dashboard: "Dashboard",
   monitoring: "Monitoring",
-  analysis: "AI Analysis",
+  analysis: "Analisis Data",
   history: "Riwayat Data",
   settings: "Pengaturan"
 };
@@ -63,7 +63,7 @@ function setApiStatus(health) {
       ? "ESP32 · Tidak ada data terbaru"
       : "ESP32 · Menunggu data pertama";
   document.querySelector("#dashboard-data-note").textContent =
-    "Data sensor disimpan oleh backend lokal. Prediksi AI pada prototipe ini masih berupa contoh.";
+    "Perkiraan dihitung dari regresi linear riwayat pembacaan sensor, bukan dari model AI.";
 }
 
 async function refreshApiStatus() {

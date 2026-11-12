@@ -45,7 +45,8 @@ Jaga Wi-Fi dan API key tetap privat. Contoh memakai HTTP tanpa enkripsi, sehingg
 - `GET /api/monitoring/latest` — pembacaan terbaru.
 - `GET /api/monitoring/history` — maksimal 500 pembacaan terbaru.
 - `GET /api/monitoring/trend?from=YYYY-MM-DD&to=YYYY-MM-DD` — data tren pada rentang tanggal.
-- `GET /api/analysis/prediction` — contoh hasil prediksi; belum merupakan model AI.
+- `GET /api/analysis/prediction` — perkiraan suhu dan kelembapan satu jam ke depan dari regresi linear pada pembacaan satu jam terakhir. Perkiraan hanya tersedia jika ada minimal 3 pembacaan dalam rentang minimal 5 menit dan perangkat live sedang online; ini estimasi statistik, bukan model AI. Dalam `DATA_MODE=simulation`, perkiraan dihitung dari data simulasi, bukan sensor nyata.
+- Dashboard meminta prediksi baru otomatis setiap 30 detik dan menampilkan waktu pembaruan terakhir.
 - `GET /api/settings` dan `PUT /api/settings` — membaca dan menyimpan batas parameter.
 
 Contoh body untuk `POST /api/monitoring/readings`:
