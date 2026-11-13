@@ -41,6 +41,12 @@ function initializeDates() {
   document.querySelector("#date-label").textContent = formatDate({ day: "numeric", month: "long", year: "numeric" });
 }
 
+function formatReadingTime(timestamp) {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return "waktu tidak diketahui";
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
 function setApiStatus(health) {
   const connected = Boolean(health);
   document.querySelector("#api-status").textContent = connected ? "API terhubung" : "API terputus";
@@ -48,22 +54,37 @@ function setApiStatus(health) {
   const deviceStatus = document.querySelector("#device-status");
   if (!deviceStatus) return;
   const deviceDot = deviceStatus.previousElementSibling;
+  const deviceStatusDetail = document.querySelector("#device-status-detail");
   if (!connected || health.dataMode === "simulation") {
-    deviceStatus.textContent = connected ? "ESP32 · DHT11 (simulasi)" : "Status perangkat tidak tersedia";
+    deviceStatus.textContent = connected ? "ESP32 · Mode simulasi" : "ESP32 · Status tak diketahui";
     deviceDot.style.background = connected ? "var(--orange)" : "var(--red)";
+    deviceStatusDetail.textContent = connected
+      ? "Nilai yang tampil adalah data simulasi, bukan data dari alat."
+      : "Backend tidak dapat dihubungi; status dan pembacaan sensor belum diketahui.";
     document.querySelector("#dashboard-data-note").textContent = connected
       ? "Aplikasi berjalan dalam mode simulasi. Atur DATA_MODE=live pada backend untuk memakai pembacaan ESP32."
       : "Backend tidak terhubung; status perangkat dan data terbaru tidak dapat dipastikan.";
     return;
   }
-  deviceDot.style.background = health.deviceStatus === "online" ? "var(--green)" : "var(--orange)";
-  deviceStatus.textContent = health.deviceStatus === "online"
-    ? "ESP32 · Terhubung"
-    : health.deviceStatus === "offline"
-      ? "ESP32 · Tidak ada data terbaru"
-      : "ESP32 · Menunggu data pertama";
+  if (health.deviceStatus === "online") {
+    deviceDot.style.background = "var(--green)";
+    deviceStatus.textContent = "ESP32 · Data diterima";
+    deviceStatusDetail.textContent =
+      `Pembacaan terakhir: ${formatReadingTime(health.lastReadingAt)}. Nilai diperbarui otomatis.`;
+  } else if (health.deviceStatus === "offline") {
+    const offlineSeconds = Math.ceil((health.offlineAfterMs || 90_000) / 1000);
+    deviceDot.style.background = "var(--orange)";
+    deviceStatus.textContent = "ESP32 · Tidak ada data baru";
+    deviceStatusDetail.textContent =
+      `Terakhir diterima: ${formatReadingTime(health.lastReadingAt)}. Tidak ada kiriman selama ${offlineSeconds} detik; periksa Serial Monitor ESP32.`;
+  } else {
+    deviceDot.style.background = "var(--orange)";
+    deviceStatus.textContent = "ESP32 · Belum ada data";
+    deviceStatusDetail.textContent =
+      "Backend belum pernah menerima pembacaan. Pastikan ESP32 aktif dan periksa hasil kirim di Serial Monitor.";
+  }
   document.querySelector("#dashboard-data-note").textContent =
-    "Perkiraan dihitung dari regresi linear riwayat pembacaan sensor, bukan dari model AI.";
+    "Status mengikuti pembacaan aktual yang diterima backend. Data terbaru dan status diperiksa otomatis.";
 }
 
 async function refreshApiStatus() {

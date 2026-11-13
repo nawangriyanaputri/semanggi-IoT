@@ -1,4 +1,4 @@
-import { getLatest } from "../api.js";
+import { getLatest, muteBuzzer } from "../api.js";
 import { getCurrentSettings } from "./settings.js";
 
 let latest;
@@ -41,6 +41,23 @@ function renderDashboard(reading) {
 export async function initializeDashboard() {
   latest = await getLatest();
   renderDashboard(latest);
+  const muteButton = document.querySelector("#mute-buzzer");
+  const muteStatus = document.querySelector("#buzzer-mute-status");
+  muteButton.addEventListener("click", async () => {
+    muteButton.disabled = true;
+    muteStatus.textContent = "Mengirim perintah senyap…";
+    try {
+      const result = await muteBuzzer();
+      const minutes = Math.ceil(result.durationMs / 60_000);
+      muteStatus.textContent =
+        `Perintah dikirim. Buzzer akan senyap selama ${minutes} menit saat ESP32 menerimanya.`;
+    } catch (error) {
+      console.error("Gagal mengirim perintah senyap buzzer.", error);
+      muteStatus.textContent = `Perintah gagal: ${error.message}`;
+    } finally {
+      muteButton.disabled = false;
+    }
+  });
   window.addEventListener("settings:updated", () => renderDashboard(latest));
   window.setInterval(async () => {
     try {

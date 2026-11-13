@@ -18,10 +18,12 @@ async function request(path, options = {}) {
 
 export const getLatest = () => request("/monitoring/latest");
 export const getHistory = () => request("/monitoring/history");
+export const getExportHistory = () => request("/monitoring/history/export");
 export const getTrend = (from, to) => request(`/monitoring/trend?${new URLSearchParams({ from, to })}`);
 export const getAnalysis = () => request("/analysis/prediction");
 export const getSettings = () => request("/settings");
 export const getHealth = () => request("/health");
+export const muteBuzzer = () => request("/buzzer/mute", { method: "POST" });
 export const saveSettings = settings => request("/settings", {
   method: "PUT",
   body: JSON.stringify(settings)

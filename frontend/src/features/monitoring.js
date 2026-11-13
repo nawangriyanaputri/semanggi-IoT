@@ -2,10 +2,30 @@ import { getHealth, getHistory, getTrend } from "../api.js";
 
 const DAY_MS = 86_400_000;
 const chartBounds = { left: 44, right: 590, top: 20, bottom: 172 };
+const chartScaleDefaults = {
+  temperature: { min: 2, max: 10, step: 2 },
+  humidity: { min: 40, max: 80, step: 10 }
+};
 const rangeSelect = document.querySelector("#chart-range-monitor");
 const rangeForm = document.querySelector("#monitoring-date-form");
 const rangeMessage = document.querySelector("#monitoring-range-message");
 let dataMode = "simulation";
+
+function getChartScale(samples, key) {
+  const defaults = chartScaleDefaults[key];
+  const values = samples.map(sample => sample[key]);
+  const min = Math.min(defaults.min, Math.floor(Math.min(...values) / defaults.step) * defaults.step);
+  const max = Math.max(defaults.max, Math.ceil(Math.max(...values) / defaults.step) * defaults.step);
+  return { min, max };
+}
+
+function updateAxisLabels(chart, selector, scale) {
+  const labels = [...chart.querySelectorAll(`${selector} text`)];
+  labels.forEach((label, index) => {
+    const value = scale.max - index * (scale.max - scale.min) / Math.max(labels.length - 1, 1);
+    label.textContent = Number.isInteger(value) ? String(value) : value.toFixed(1);
+  });
+}
 
 function toDateInputValue(date) {
   const year = date.getFullYear();
@@ -29,15 +49,20 @@ function renderChart(samples, chart) {
     return;
   }
 
-  const linePath = (key, min, max) => samples.map((sample, index) => {
+  const temperatureScale = getChartScale(samples, "temperature");
+  const humidityScale = getChartScale(samples, "humidity");
+  updateAxisLabels(chart, ".chart-ylabels-temp", temperatureScale);
+  updateAxisLabels(chart, ".chart-ylabels-hum", humidityScale);
+
+  const linePath = (key, scale) => samples.map((sample, index) => {
     const x = chartBounds.left + index * (chartBounds.right - chartBounds.left) / Math.max(samples.length - 1, 1);
     const y = chartBounds.bottom -
-      (sample[key] - min) * (chartBounds.bottom - chartBounds.top) / (max - min);
+      (sample[key] - scale.min) * (chartBounds.bottom - chartBounds.top) / (scale.max - scale.min);
     return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
   }).join(" ");
 
-  chart.querySelector(".chart-temp").setAttribute("d", linePath("temperature", 2, 10));
-  chart.querySelector(".chart-hum").setAttribute("d", linePath("humidity", 40, 80));
+  chart.querySelector(".chart-temp").setAttribute("d", linePath("temperature", temperatureScale));
+  chart.querySelector(".chart-hum").setAttribute("d", linePath("humidity", humidityScale));
 
   const labelGroup = chart.querySelector(".chart-xlabels");
   if (!labelGroup) return;

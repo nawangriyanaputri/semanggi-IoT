@@ -61,7 +61,8 @@ const server = http.createServer(async (request, response) => {
       pathname,
       body,
       url.searchParams,
-      request.headers["x-device-key"]
+      request.headers["x-device-key"],
+      request.socket.remoteAddress
     );
     if (result === undefined) {
       sendJson(response, 404, { error: "Endpoint tidak ditemukan." });

@@ -10,7 +10,7 @@ const readingsPath = process.env.READINGS_FILE ||
   path.join(__dirname, "..", "..", "data", "readings.json");
 const maxReadings = 20_000;
 const maxHistoryResponse = 500;
-const offlineAfterMs = Number(process.env.DEVICE_OFFLINE_AFTER_MS || 90_000);
+const offlineAfterMs = Number(process.env.DEVICE_OFFLINE_AFTER_MS || 360_000);
 if (!Number.isFinite(offlineAfterMs) || offlineAfterMs <= 0) {
   throw new Error("DEVICE_OFFLINE_AFTER_MS harus berupa angka positif.");
 }
@@ -112,14 +112,27 @@ async function getHistory() {
   return readings.slice(-maxHistoryResponse).reverse();
 }
 
+async function getAllHistory() {
+  if (dataMode === "simulation") return simulatedHistory;
+  const readings = await readReadings();
+  return readings.slice().reverse();
+}
+
 async function getStatus() {
   const latest = await getLatest();
-  const online = dataMode === "simulation" ||
-    (latest !== null && Date.now() - Date.parse(latest.timestamp) <= offlineAfterMs);
+  const online = latest !== null &&
+    Date.now() - Date.parse(latest.timestamp) <= offlineAfterMs;
   return {
     dataMode,
-    deviceStatus: dataMode === "simulation" ? "simulation" : online ? "online" : "offline",
-    lastReadingAt: latest?.timestamp || null
+    deviceStatus: dataMode === "simulation"
+      ? "simulation"
+      : latest === null
+        ? "waiting"
+        : online
+          ? "online"
+          : "offline",
+    lastReadingAt: latest?.timestamp || null,
+    offlineAfterMs
   };
 }
 
@@ -127,17 +140,27 @@ function parseDate(value, field) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw Object.assign(new Error(`Tanggal ${field} harus menggunakan format YYYY-MM-DD.`), { status: 400 });
   }
-  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
-  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(0);
+  date.setFullYear(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  if (date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day) {
     throw Object.assign(new Error(`Tanggal ${field} tidak valid.`), { status: 400 });
   }
-  return timestamp;
+  return date.getTime();
+}
+
+function getEndOfDate(timestamp) {
+  const nextDate = new Date(timestamp);
+  nextDate.setDate(nextDate.getDate() + 1);
+  return nextDate.getTime() - 1;
 }
 
 function filterAndLimit(readings, from, to) {
   const start = parseDate(from, "mulai");
-  const end = parseDate(to, "akhir");
-  const endOfRange = end + 86_400_000 - 1;
+  const endOfRange = getEndOfDate(parseDate(to, "akhir"));
   if (endOfRange < start) {
     throw Object.assign(new Error("Tanggal mulai harus sama dengan atau sebelum tanggal akhir."), { status: 400 });
   }
@@ -153,8 +176,7 @@ function filterAndLimit(readings, from, to) {
 
 function getSimulatedTrend(from, to) {
   const start = parseDate(from, "mulai");
-  const end = parseDate(to, "akhir");
-  const endOfRange = end + 86_400_000 - 1;
+  const endOfRange = getEndOfDate(parseDate(to, "akhir"));
   const duration = endOfRange - start;
   if (duration < 0) {
     throw Object.assign(new Error("Tanggal mulai harus sama dengan atau sebelum tanggal akhir."), { status: 400 });
@@ -179,4 +201,4 @@ async function getTrend(from, to) {
   return filterAndLimit(readings, from, to);
 }
 
-module.exports = { dataMode, getHistory, getLatest, getStatus, getTrend, saveReading };
+module.exports = { dataMode, getAllHistory, getHistory, getLatest, getStatus, getTrend, saveReading };

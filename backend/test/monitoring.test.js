@@ -56,8 +56,14 @@ test("stores real readings for latest, history, trends, and device status", asyn
   const latest = await routeRequest("GET", "/api/monitoring/latest");
   assert.deepEqual(latest, reading);
   assert.deepEqual(await routeRequest("GET", "/api/monitoring/history"), [reading]);
+  assert.deepEqual(await routeRequest("GET", "/api/monitoring/history/export"), [reading]);
 
-  const date = reading.timestamp.slice(0, 10);
+  const now = new Date(reading.timestamp);
+  const date = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
   const trend = await routeRequest(
     "GET",
     "/api/monitoring/trend",
@@ -69,4 +75,51 @@ test("stores real readings for latest, history, trends, and device status", asyn
   const health = await routeRequest("GET", "/api/health");
   assert.equal(health.dataMode, "live");
   assert.equal(health.deviceStatus, "online");
+});
+
+test("queues a one-minute buzzer mute for an authenticated device", async () => {
+  await assert.rejects(
+    routeRequest(
+      "GET",
+      "/api/device/buzzer",
+      undefined,
+      new URLSearchParams(),
+      "wrong-key"
+    ),
+    { status: 401 }
+  );
+
+  const command = await routeRequest(
+    "POST",
+    "/api/buzzer/mute",
+    undefined,
+    new URLSearchParams(),
+    undefined,
+    "127.0.0.1"
+  );
+  assert.equal(command.durationMs, 60_000);
+
+  const state = await routeRequest(
+    "GET",
+    "/api/device/buzzer",
+    undefined,
+    new URLSearchParams(),
+    process.env.DEVICE_API_KEY
+  );
+  assert.equal(state.muteUntil, command.muteUntil);
+  assert.ok(state.remainingMs > 0 && state.remainingMs <= command.durationMs);
+});
+
+test("rejects buzzer mute requests from non-loopback clients", async () => {
+  await assert.rejects(
+    routeRequest(
+      "POST",
+      "/api/buzzer/mute",
+      undefined,
+      new URLSearchParams(),
+      undefined,
+      "192.168.1.20"
+    ),
+    { status: 403 }
+  );
 });

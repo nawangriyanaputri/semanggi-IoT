@@ -27,7 +27,8 @@
       <div class="side-bottom">
         <div class="device-card">
           <div class="device-heading"><span>Perangkat Sensor</span><span style="color:#9aa4b4;font-weight:500">01</span></div>
-          <div class="device-state"><span class="dot"></span><span id="device-status">ESP32 · DHT11 (simulasi)</span></div>
+          <div class="device-state"><span class="dot" style="background:var(--orange)"></span><span id="device-status">Memeriksa status sensor…</span></div>
+          <div class="device-status-detail" id="device-status-detail" aria-live="polite">Memeriksa pembacaan dari backend.</div>
           <div class="device-state"><span class="dot" id="api-status-dot" style="background:var(--orange)"></span><span id="api-status">Menghubungkan API…</span></div>
         </div>
         <div class="side-foot">Satuan Pelayanan Pemenuhan Gizi<br>Monitoring penyimpanan bahan pangan</div>
@@ -49,18 +50,18 @@
           <div class="grid metrics">
             <article class="card metric">
               <div class="metric-top"><span class="metric-label">Suhu Ruangan</span><span class="metric-icon temp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 14.76V5a3 3 0 0 0-6 0v9.76a5 5 0 1 0 6 0Z"/><path d="M11 11v7"/></svg></span></div>
-              <div class="metric-value"><span data-temperature>5.2</span> <small>°C</small></div>
+              <div class="metric-value"><span data-temperature>—</span> <small>°C</small></div>
               <div class="metric-note">Batas parameter: <span id="temp-range">2–8 °C</span> · <span class="good">Normal</span></div>
             </article>
             <article class="card metric">
               <div class="metric-top"><span class="metric-label">Kelembapan</span><span class="metric-icon humidity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5S5 11 5 15.5a7 7 0 0 0 14 0c0-4.5-7-12-7-12Z"/><path d="M9 16a3 3 0 0 0 3 3"/></svg></span></div>
-              <div class="metric-value"><span data-humidity>68</span> <small>%RH</small></div>
+              <div class="metric-value"><span data-humidity>—</span> <small>%RH</small></div>
               <div class="metric-note">Batas parameter: <span id="humidity-range">40–70 %RH</span> · <span class="good">Normal</span></div>
             </article>
             <article class="card metric">
               <div class="metric-top"><span class="metric-label">Kondisi Lingkungan</span><span class="metric-icon status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span></div>
-              <div class="status-value"><span class="dot"></span><span id="condition">Aman</span></div>
-              <div class="metric-note">Pembaruan terakhir: <span id="last-update"></span></div>
+              <div class="status-value"><span class="dot" style="background:var(--orange)"></span><span id="condition">Menunggu data</span></div>
+              <div class="metric-note">Pembaruan terakhir: <span id="last-update">—</span></div>
             </article>
           </div>
           <div class="grid two-col">
@@ -71,10 +72,10 @@
                 <svg class="chart-svg" data-chart="dashboard" viewBox="0 0 620 205" role="img" aria-label="Grafik tren suhu dan kelembapan">
                   <defs><linearGradient id="tempFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5278e8" stop-opacity=".14"/><stop offset="1" stop-color="#5278e8" stop-opacity="0"/></linearGradient></defs>
                   <g class="chart-gridline"><path d="M44 20H590"/><path d="M44 58H590"/><path d="M44 96H590"/><path d="M44 134H590"/><path d="M44 172H590"/></g>
-                  <g><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
-                  <path class="chart-area" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68 L590 172 L44 172Z"/>
-                  <path class="chart-temp" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68"/>
-                  <path class="chart-hum" d="M44 111 C75 99 87 118 112 105 S154 85 180 99 S222 110 248 91 S292 81 316 94 S355 112 383 96 S422 78 450 92 S494 109 519 94 S560 80 590 89"/>
+                  <g class="chart-ylabels-temp"><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text></g>
+                  <g class="chart-ylabels-hum"><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
+                  <path class="chart-temp" d=""/>
+                  <path class="chart-hum" d=""/>
                   <g><text x="40" y="195">06.00</text><text x="145" y="195">09.00</text><text x="253" y="195">12.00</text><text x="360" y="195">15.00</text><text x="467" y="195">18.00</text><text x="564" y="195">21.00</text></g>
                 </svg>
               </div>
@@ -92,7 +93,7 @@
             </article>
           </div>
           <div class="grid notice-grid">
-            <article class="card notice-card"><span class="notice-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg></span><div><h2 class="notice-title">Peringatan &amp; Status</h2><p class="notice-text" id="warning-message">Memuat status parameter…</p></div></article>
+            <article class="card notice-card"><span class="notice-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg></span><div><h2 class="notice-title">Peringatan &amp; Status</h2><p class="notice-text" id="warning-message">Memuat status parameter…</p><button class="primary-btn mute-buzzer-btn" id="mute-buzzer" type="button">Senyapkan Buzzer (1 menit)</button><p class="mute-buzzer-status" id="buzzer-mute-status" role="status" aria-live="polite"></p></div></article>
             <article class="card notice-card"><span class="notice-icon tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6m-5 4h4m-2-20a7 7 0 0 0-4 12.75c.6.4 1 1.1 1 1.75h6c0-.65.4-1.35 1-1.75A7 7 0 0 0 12 2Z"/></svg></span><div><h2 class="notice-title">Rekomendasi</h2><p class="notice-text" id="recommendation">Memuat rekomendasi…</p></div></article>
           </div>
           <p class="footer-note" id="dashboard-data-note">Memeriksa mode data…</p>
@@ -127,14 +128,15 @@
               <div class="chart-legend"><span class="legend-item"><i class="legend-line"></i>Suhu (°C)</span><span class="legend-item"><i class="legend-line hum"></i>Kelembapan (%RH)</span></div>
               <svg class="chart-svg" data-chart="monitoring" viewBox="0 0 620 205" role="img" aria-label="Grafik tren suhu dan kelembapan">
                 <g class="chart-gridline"><path d="M44 20H590"/><path d="M44 58H590"/><path d="M44 96H590"/><path d="M44 134H590"/><path d="M44 172H590"/></g>
-                <g><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
-                <path class="chart-temp" d="M44 126 C73 121 83 105 112 108 S156 122 180 109 S223 83 248 93 S294 111 316 97 S355 76 383 84 S422 99 450 79 S495 67 519 77 S560 94 590 68"/>
-                <path class="chart-hum" d="M44 111 C75 99 87 118 112 105 S154 85 180 99 S222 110 248 91 S292 81 316 94 S355 112 383 96 S422 78 450 92 S494 109 519 94 S560 80 590 89"/>
+                <g class="chart-ylabels-temp"><text x="12" y="23">10</text><text x="18" y="61">8</text><text x="18" y="99">6</text><text x="18" y="137">4</text><text x="18" y="175">2</text></g>
+                <g class="chart-ylabels-hum"><text x="594" y="23">80</text><text x="594" y="61">70</text><text x="594" y="99">60</text><text x="594" y="137">50</text><text x="594" y="175">40</text></g>
+                <path class="chart-temp" d=""/>
+                <path class="chart-hum" d=""/>
                 <g class="chart-xlabels"></g>
               </svg>
             </div>
           </article>
-          <p class="footer-note">Backend API terhubung, tetapi data grafik masih berupa ilustrasi. Perangkat ESP32 belum terhubung.</p>
+          <p class="footer-note">Grafik diperbarui dari pembacaan yang diterima backend untuk rentang waktu yang dipilih.</p>
         </section>
 
         <section class="view" id="view-analysis" hidden>
@@ -150,7 +152,8 @@
         <section class="view" id="view-history" hidden>
           <div class="page-heading"><div><h1>Riwayat Data</h1><p>Catatan pengukuran sensor terbaru.</p></div><div class="date-pill">Maksimal 500 pembacaan</div></div>
           <article class="card page-panel">
-            <h2 class="section-heading">Pengukuran Terbaru</h2><p class="section-description">Riwayat ini disediakan sebagai contoh tampilan. Data belum diambil dari database.</p>
+            <h2 class="section-heading">Pengukuran Terbaru</h2><p class="section-description">Tabel menampilkan maksimal 500 pembacaan. Unduhan CSV berisi seluruh riwayat tersimpan (maksimal 20.000 pembacaan).</p>
+            <div class="history-actions"><button class="primary-btn" id="download-history" type="button">Unduh riwayat (CSV)</button><span class="save-message" id="history-download-status" role="status" aria-live="polite"></span></div>
             <div class="table-scroll"><table><thead><tr><th>WAKTU</th><th>SUHU</th><th>KELEMBAPAN</th><th>KONDISI</th><th>SUMBER</th></tr></thead><tbody id="history-rows"></tbody></table></div>
           </article>
         </section>

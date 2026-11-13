@@ -1,5 +1,6 @@
 const { getPrediction } = require("./features/analysis");
-const { dataMode, getHistory, getLatest, getStatus, getTrend, saveReading } = require("./features/monitoring");
+const { getBuzzerMuteState, requestBuzzerMute } = require("./features/buzzer");
+const { dataMode, getAllHistory, getHistory, getLatest, getStatus, getTrend, saveReading } = require("./features/monitoring");
 const { getSettings, updateSettings } = require("./features/settings");
 const { timingSafeEqual } = require("node:crypto");
 
@@ -18,7 +19,13 @@ function authorizeDevice(suppliedKey) {
   }
 }
 
-async function routeRequest(method, pathname, body, searchParams, deviceKey) {
+function isLoopbackAddress(address) {
+  return address === "127.0.0.1" ||
+    address === "::1" ||
+    address === "::ffff:127.0.0.1";
+}
+
+async function routeRequest(method, pathname, body, searchParams, deviceKey, remoteAddress) {
   if (method === "GET" && pathname === "/api/health") {
     return { status: "ok", service: "sppg-monitor-api", ...await getStatus() };
   }
@@ -26,8 +33,24 @@ async function routeRequest(method, pathname, body, searchParams, deviceKey) {
     authorizeDevice(deviceKey);
     return saveReading(body);
   }
+  if (method === "GET" && pathname === "/api/device/buzzer") {
+    authorizeDevice(deviceKey);
+    return getBuzzerMuteState();
+  }
+  if (method === "POST" && pathname === "/api/buzzer/mute") {
+    if (!isLoopbackAddress(remoteAddress)) {
+      throw Object.assign(new Error("Perintah buzzer hanya dapat dikirim dari komputer backend."), { status: 403 });
+    }
+    if (dataMode !== "live") {
+      throw Object.assign(new Error("Perintah buzzer hanya tersedia pada mode live."), { status: 409 });
+    }
+    return requestBuzzerMute();
+  }
   if (method === "GET" && pathname === "/api/monitoring/latest") {
     return getLatest();
+  }
+  if (method === "GET" && pathname === "/api/monitoring/history/export") {
+    return getAllHistory();
   }
   if (method === "GET" && pathname === "/api/monitoring/history") {
     return getHistory();
@@ -42,6 +65,9 @@ async function routeRequest(method, pathname, body, searchParams, deviceKey) {
     return getSettings();
   }
   if (method === "PUT" && pathname === "/api/settings") {
+    if (!isLoopbackAddress(remoteAddress)) {
+      throw Object.assign(new Error("Pengaturan hanya dapat diubah dari komputer backend."), { status: 403 });
+    }
     return updateSettings(body);
   }
   return undefined;
