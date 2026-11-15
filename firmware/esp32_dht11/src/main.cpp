@@ -1,12 +1,14 @@
 #include <DHT.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <WiFiManager.h>
+#include <Preferences.h>
 #include <math.h>
 #include <ArduinoJson.h>
 #include "secrets.h"
-#include "network_config.h"
 
 const char *DEVICE_ID = "ruang-penyimpanan-1";
+const char *CONFIG_PORTAL_SSID = "SPPG-Monitor-Setup";
 
 constexpr uint8_t DHT_PIN = 4;
 constexpr uint8_t BUZZER_PIN = 19;
@@ -19,10 +21,13 @@ constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
 constexpr uint32_t SEND_RETRY_INTERVAL_MS = 15000;
 constexpr uint32_t BUZZER_POLL_INTERVAL_MS = 2000;
 constexpr uint32_t BUTTON_DEBOUNCE_MS = 50;
+constexpr uint32_t CONFIG_BUTTON_HOLD_MS = 5000;
 constexpr uint32_t BUZZER_MUTE_DURATION_MS = 60000;
 #define DHT_TYPE DHT11
 
 DHT dht(DHT_PIN, DHT_TYPE);
+Preferences preferences;
+char backendIp[16] = "";
 uint32_t lastReadingAt = 0;
 uint32_t lastWiFiAttemptAt = 0;
 bool hasAttemptedWiFi = false;
@@ -53,6 +58,77 @@ uint32_t buzzerMuteDurationMs = BUZZER_MUTE_DURATION_MS;
 int lastButtonReading = HIGH;
 int stableButtonState = HIGH;
 uint32_t lastButtonChangeAt = 0;
+uint32_t buttonPressedAt = 0;
+bool configPortalOpenedForPress = false;
+
+String backendUrl(const char *path) {
+  return String("http://") + backendIp + ":3000" + path;
+}
+
+bool isValidBackendIp(const char *value) {
+  IPAddress address;
+  return address.fromString(value) &&
+    address != IPAddress(0, 0, 0, 0) &&
+    address != IPAddress(127, 0, 0, 1);
+}
+
+void openConfigPortal() {
+  Serial.printf("Portal konfigurasi aktif. Hubungkan ke Wi-Fi %s.\n", CONFIG_PORTAL_SSID);
+  Serial.println("Atur Wi-Fi dan IPv4 backend melalui halaman konfigurasi.");
+
+  WiFiManager wifiManager;
+  wifiManager.setConfigPortalTimeout(0);
+  WiFiManagerParameter backendIpParameter(
+    "backend_ip", "Backend server IPv4", backendIp, sizeof(backendIp));
+  wifiManager.addParameter(&backendIpParameter);
+
+  while (true) {
+    if (!wifiManager.startConfigPortal(CONFIG_PORTAL_SSID)) {
+      Serial.println("Portal konfigurasi tertutup sebelum tersambung; membuka kembali.");
+      delay(1000);
+      continue;
+    }
+
+    const char *configuredIp = backendIpParameter.getValue();
+    if (!isValidBackendIp(configuredIp)) {
+      Serial.println("IPv4 backend tidak valid. Masukkan alamat IPv4 komputer backend.");
+      continue;
+    }
+
+    strlcpy(backendIp, configuredIp, sizeof(backendIp));
+    preferences.putString("backend_ip", backendIp);
+    Serial.printf("Wi-Fi tersambung. IP backend: %s:3000\n", backendIp);
+    hasAttemptedWiFi = true;
+    wifiConnectInProgress = false;
+    wasWiFiConnected = true;
+    return;
+  }
+}
+
+void configureWiFi() {
+  WiFiManager wifiManager;
+  wifiManager.setConfigPortalTimeout(0);
+  WiFiManagerParameter backendIpParameter(
+    "backend_ip", "Backend server IPv4", backendIp, sizeof(backendIp));
+  wifiManager.addParameter(&backendIpParameter);
+
+  if (!wifiManager.autoConnect(CONFIG_PORTAL_SSID)) {
+    openConfigPortal();
+    return;
+  }
+
+  const char *configuredIp = backendIpParameter.getValue();
+  if (!isValidBackendIp(configuredIp)) {
+    openConfigPortal();
+    return;
+  }
+
+  strlcpy(backendIp, configuredIp, sizeof(backendIp));
+  preferences.putString("backend_ip", backendIp);
+  Serial.printf("Wi-Fi terhubung. IP ESP32: %s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("IP backend: %s:3000\n", backendIp);
+  wasWiFiConnected = true;
+}
 
 bool connectToWiFi() {
   if (WiFi.status() == WL_CONNECTED) {
@@ -85,7 +161,7 @@ bool connectToWiFi() {
   lastWiFiAttemptAt = now;
   wifiConnectInProgress = true;
   Serial.println("Menghubungkan ke Wi-Fi.");
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.reconnect();
   return WiFi.status() == WL_CONNECTED;
 }
 
@@ -100,7 +176,7 @@ bool fetchBackendSettings() {
   lastSettingsFetchAt = now;
 
   HTTPClient http;
-  if (!http.begin(SETTINGS_URL)) {
+  if (!http.begin(backendUrl("/api/settings"))) {
     Serial.println("Gagal membuka endpoint pengaturan backend.");
     return false;
   }
@@ -167,11 +243,21 @@ void updateButton() {
   }
 
   stableButtonState = reading;
-  if (stableButtonState == LOW && alarmActive) {
+  if (stableButtonState == LOW) {
+    buttonPressedAt = now;
+    configPortalOpenedForPress = false;
+  } else if (!configPortalOpenedForPress &&
+      now - buttonPressedAt < CONFIG_BUTTON_HOLD_MS && alarmActive) {
     buzzerMuted = true;
     buzzerMutedAt = now;
     buzzerMuteDurationMs = BUZZER_MUTE_DURATION_MS;
     Serial.println("Tombol ditekan; buzzer senyap selama 1 menit.");
+  }
+
+  if (stableButtonState == LOW && !configPortalOpenedForPress &&
+      now - buttonPressedAt >= CONFIG_BUTTON_HOLD_MS) {
+    configPortalOpenedForPress = true;
+    openConfigPortal();
   }
 }
 
@@ -195,7 +281,7 @@ bool fetchRemoteBuzzerCommand() {
   lastBuzzerPollAt = now;
 
   HTTPClient http;
-  if (!http.begin(BUZZER_URL)) {
+  if (!http.begin(backendUrl("/api/device/buzzer"))) {
     Serial.println("Gagal membuka endpoint perintah buzzer.");
     return false;
   }
@@ -243,7 +329,7 @@ void evaluateLatestReading() {
 
 bool sendReading(float temperature, float humidity) {
   HTTPClient http;
-  if (!http.begin(API_URL)) {
+  if (!http.begin(backendUrl("/api/monitoring/readings"))) {
     Serial.println("Gagal membuka koneksi ke API.");
     return false;
   }
@@ -296,9 +382,12 @@ void setup() {
   stableButtonState = digitalRead(BUTTON_PIN);
   lastButtonReading = stableButtonState;
   WiFi.mode(WIFI_STA);
+  preferences.begin("sppg-monitor", false);
+  const String savedBackendIp = preferences.getString("backend_ip", "");
+  strlcpy(backendIp, savedBackendIp.c_str(), sizeof(backendIp));
   dht.begin();
   lastReadingAt = millis() - READING_INTERVAL_MS;
-  connectToWiFi();
+  configureWiFi();
 }
 
 void loop() {

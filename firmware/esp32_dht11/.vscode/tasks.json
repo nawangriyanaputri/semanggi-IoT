@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Configure ESP32 Wi-Fi and backend IP",
+      "label": "Configure ESP32 device API key",
       "type": "shell",
       "command": "powershell.exe",
       "args": [
@@ -16,9 +16,6 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated"
-      },
-      "runOptions": {
-        "runOn": "folderOpen"
       }
     }
   ]
