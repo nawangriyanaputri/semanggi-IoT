@@ -13,8 +13,15 @@ const contentTypes = {
 };
 
 http.createServer((request, response) => {
-  const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
-  const requestedPath = pathname === "/" ? "/index.html" : decodeURIComponent(pathname);
+  let requestedPath;
+  try {
+    const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
+    requestedPath = pathname === "/" ? "/index.html" : decodeURIComponent(pathname);
+  } catch (error) {
+    if (!(error instanceof URIError) && !(error instanceof TypeError)) throw error;
+    response.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" }).end("Bad request");
+    return;
+  }
   const filePath = path.resolve(root, `.${requestedPath}`);
   if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
     response.writeHead(403).end("Forbidden");

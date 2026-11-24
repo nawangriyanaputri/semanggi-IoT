@@ -1,6 +1,6 @@
 {
   "tempMin": 2,
-  "tempMax": 8,
+  "tempMax": 25,
   "humidityMin": 40,
   "humidityMax": 70
 }

@@ -11,10 +11,14 @@ const char *DEVICE_ID = "ruang-penyimpanan-1";
 const char *CONFIG_PORTAL_SSID = "SPPG-Monitor-Setup";
 
 constexpr uint8_t DHT_PIN = 4;
+constexpr uint8_t LED_PIN = 18;
 constexpr uint8_t BUZZER_PIN = 19;
+constexpr uint8_t FAN_RELAY_PIN = 25;
 constexpr uint8_t BUTTON_PIN = 26;
 constexpr uint8_t BUZZER_ACTIVE_LEVEL = LOW;
 constexpr uint8_t BUZZER_INACTIVE_LEVEL = HIGH;
+constexpr uint8_t FAN_RELAY_ACTIVE_LEVEL = LOW;
+constexpr uint8_t FAN_RELAY_INACTIVE_LEVEL = HIGH;
 constexpr uint32_t READING_INTERVAL_MS = 300000;
 constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 10000;
 constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
@@ -102,6 +106,16 @@ void openConfigPortal() {
     wifiConnectInProgress = false;
     wasWiFiConnected = true;
     return;
+  }
+}
+
+void updateSerialCommands() {
+  while (Serial.available() > 0) {
+    const char command = static_cast<char>(Serial.read());
+    if (command == 'c' || command == 'C') {
+      openConfigPortal();
+      return;
+    }
   }
 }
 
@@ -261,13 +275,15 @@ void updateButton() {
   }
 }
 
-void updateBuzzer() {
+void updateAlarmOutputs() {
   if (buzzerMuted && millis() - buzzerMutedAt >= buzzerMuteDurationMs) {
     buzzerMuted = false;
     Serial.println("Waktu senyap selesai; buzzer peringatan aktif kembali.");
   }
   const bool shouldSound = alarmActive && !buzzerMuted;
   digitalWrite(BUZZER_PIN, shouldSound ? BUZZER_ACTIVE_LEVEL : BUZZER_INACTIVE_LEVEL);
+  digitalWrite(LED_PIN, alarmActive ? HIGH : LOW);
+  digitalWrite(FAN_RELAY_PIN, alarmActive ? FAN_RELAY_ACTIVE_LEVEL : FAN_RELAY_INACTIVE_LEVEL);
 }
 
 bool fetchRemoteBuzzerCommand() {
@@ -313,7 +329,7 @@ bool fetchRemoteBuzzerCommand() {
   buzzerMuteDurationMs = min(remainingMs, BUZZER_MUTE_DURATION_MS);
   Serial.printf("Perintah web diterima; buzzer senyap selama %lu detik.\n",
     static_cast<unsigned long>(buzzerMuteDurationMs / 1000));
-  updateBuzzer();
+  updateAlarmOutputs();
   return true;
 }
 
@@ -324,7 +340,7 @@ void evaluateLatestReading() {
     latestHumidity < humidityMin ||
     latestHumidity > humidityMax;
   setAlarmActive(outsideLimits);
-  updateBuzzer();
+  updateAlarmOutputs();
 }
 
 bool sendReading(float temperature, float humidity) {
@@ -376,6 +392,11 @@ void readSensorAndSend() {
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Ketik c lalu Enter untuk membuka portal konfigurasi Wi-Fi.");
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(FAN_RELAY_PIN, FAN_RELAY_INACTIVE_LEVEL);
+  pinMode(FAN_RELAY_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, BUZZER_INACTIVE_LEVEL);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -391,6 +412,7 @@ void setup() {
 }
 
 void loop() {
+  updateSerialCommands();
   updateButton();
   connectToWiFi();
   fetchRemoteBuzzerCommand();
@@ -411,6 +433,6 @@ void loop() {
     }
   }
   updateButton();
-  updateBuzzer();
+  updateAlarmOutputs();
   delay(10);
 }
